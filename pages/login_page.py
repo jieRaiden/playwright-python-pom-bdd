@@ -8,7 +8,6 @@ class LoginPage(BasePage):
     def __init__(self, page):
         super().__init__(page)  # 初始化基类
         # 定位器定义：尽量语义化（label/role），退而求其次 data-testid / CSS
-
         self.emailusername = self.page.locator("#userEmail")
         self.password = self.page.locator("#userPassword")
         self.loginBtn = self.page.locator("#login")
