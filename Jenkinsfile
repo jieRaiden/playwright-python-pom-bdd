@@ -1,47 +1,35 @@
 pipeline {
-    agent any
-    options { ansiColor('xterm'); timestamps() }
+  agent any
+  environment {
+    PYTHON = 'C:\\Users\\Raiden\\AppData\\Local\\Programs\\Python\\Python310\\python.exe'
+  }
 
-    stages {
-        stage('Prepare Environment') {
-            steps {
-                bat '''
-                    echo ===== Checking Python version =====
-                    py -3 --version
-
-                    if not exist .venv (
-                        echo 🟡 Creating virtual environment...
-                        py -3 -m venv .venv
-                        call .venv\\Scripts\\activate
-                        python -m pip install --upgrade pip
-                        pip install -r requirements.txt
-                        python -m playwright install
-                    ) else (
-                        echo 🟢 Using existing virtual environment...
-                        call .venv\\Scripts\\activate
-                        pip install -r requirements.txt --quiet
-                    )
-                '''
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                bat '''
-                    call .venv\\Scripts\\activate
-                    echo ===== Running pytest-bdd =====
-                    pytest --maxfail=1 --disable-warnings -q --junitxml=test-results\\junit.xml
-                '''
-            }
-        }
+  stages {
+    stage('Setup Environment') {
+      steps {
+        bat '''
+          "%PYTHON%" -m venv .venv
+          call .venv\\Scripts\\activate
+          "%PYTHON%" -m pip install --upgrade pip
+          pip install -r requirements.txt
+          "%PYTHON%" -m playwright install
+        '''
+      }
     }
 
-    post {
-        always {
-            junit allowEmptyResults: true, testResults: 'test-results/junit.xml'
-            archiveArtifacts artifacts: 'test-results/**', allowEmptyArchive: true
-        }
-        success { echo '✅ All tests passed successfully!' }
-        failure { echo '❌ Some tests failed — check Console Output.' }
+    stage('Run Tests') {
+      steps {
+        bat '''
+          call .venv\\Scripts\\activate
+          pytest tests/ --maxfail=1 --disable-warnings -q --junitxml=test-results\\junit.xml
+        '''
+      }
     }
+  }
+
+  post {
+    always {
+      junit 'test-results/junit.xml'
+    }
+  }
 }
