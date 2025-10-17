@@ -1,15 +1,26 @@
-name: CI (API fast)
+name: CI/CD (API fast + Report to Pages)
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - staging
   pull_request:
+
+# Pages 部署需要的权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # ─────────────────────────────
+  # CI：main / PR 都会跑（Windows）
+  # ─────────────────────────────
   test-api:
     runs-on: windows-latest
 
@@ -36,15 +47,48 @@ jobs:
           pip install -r requirements.txt
           python -m playwright install
 
-      - name: Run tests (API)
+      - name: Run tests (API) + HTML report
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path test-results | Out-Null
           pytest -m "api" --junitxml=test-results/junit.xml --html=test-results/report.html --self-contained-html -q
 
-      - name: Upload test results
+      - name: Upload test results (artifact)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: test-results/**
+
+  # ─────────────────────────────
+  # CD：仅当 push 到 staging 且 CI 成功时部署到 Pages
+  # ─────────────────────────────
+  deploy-pages:
+    needs: test-api
+    if: github.ref == 'refs/heads/staging' && needs.test-api.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+
+    steps:
+      - name: Download test-results artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: public/test-results
+
+      # 可选：把报告改名为 index.html，访问更简洁
+      - name: Prepare site
+        run: |
+          if [ -f "public/test-results/report.html" ]; then
+            mv public/test-results/report.html public/index.html
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
