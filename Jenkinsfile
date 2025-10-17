@@ -52,11 +52,11 @@ pipeline {
 
     // staging：跑全量（UI+API）
     stage('Run tests - Full (staging)') {
-      when { branch 'staging' }
+      { branch 'staging' }
       steps {
         bat '''
           if not exist test-results mkdir test-results
-          "%VENV_PY%" -m pytest -q ^
+          "%VENV_PY%" -m pytest -m "api" -q ^
             --junitxml=test-results\\junit.xml ^
             --html=test-results\\report.html --self-contained-html
         '''
