@@ -10,7 +10,7 @@ from ultilities.jsonReader import JsonReader
 def orders_api(api_base_url: str, api_session: requests.Session) -> OrdersApi:
     return OrdersApi(base_url=api_base_url, session=api_session)
 
-@pytest.mark.ordersapi
+@pytest.mark.api
 @when('I buy a product and verify')
 def test_addtocarts_api(orders_api: OrdersApi, userApi_Cred) -> None:
     token = userApi_Cred.token

@@ -36,7 +36,7 @@ def login_api(api_base_url: str, api_session: requests.Session) -> LoginAPI:
 #     assert response.user_id
 #     return response
 
-@pytest.mark.loginapi
+@pytest.mark.api
 @given('I put wrong credential to login')
 def test_login_api_with_wrong_cred(login_api: LoginAPI):
     with pytest.raises(requests.HTTPError) as exc_info:

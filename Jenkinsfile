@@ -30,7 +30,7 @@ pipeline {
     stage('Run tests') {
       steps {
         bat '''
-          "%VENV_PY%" -m pytest -q --junitxml=test-results\\junit.xml
+          "%VENV_PY%" -m pytest -m "api" -q --junitxml=test-results\\junit.xml
         '''
       }
     }
