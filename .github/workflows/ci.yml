@@ -77,7 +77,7 @@ jobs:
           name: test-results
           path: public/test-results
 
-      # 可选：把报告改名为 index.html，访问更简洁
+      # 可选： 把报告改名为 index.html，访问更简洁
       - name: Prepare site
         run: |
           if [ -f "public/test-results/report.html" ]; then
