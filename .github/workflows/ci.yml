@@ -40,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path test-results | Out-Null
-          pytest -m "api" -q --junitxml=test-results/junit.xml
+          pytest -m "api" --junitxml=test-results/junit.xml --html=test-results/report.html --self-contained-html -q
 
       - name: Upload test results
         if: always()
