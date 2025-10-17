@@ -2,4 +2,5 @@ playwright==1.48.0
 pytest==8.3.3              
 pytest-playwright==0.5.0   
 pytest-bdd==7.1.2          
-requests==2.32.3           
+requests==2.32.3   
+pytest-html==4.1.1        
