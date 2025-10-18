@@ -39,7 +39,7 @@ pipeline {
 
     // 非 staging：只跑 API 快速集
     stage('Run tests - API (non-staging)') {
-      when { not when { branch 'staging' } }
+      when { not { branch 'staging' } }
       steps {
         bat '''
           if not exist test-results mkdir test-results
@@ -65,7 +65,7 @@ pipeline {
 
     // staging：在 Jenkins 中发布 HTML 报告
     stage('Publish HTML (staging only)') {
-      when when { branch 'staging' }
+      when { branch 'staging' }
       steps {
         publishHTML(target: [
           reportDir: 'test-results',
