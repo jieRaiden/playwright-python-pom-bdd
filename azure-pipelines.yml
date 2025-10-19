@@ -46,8 +46,11 @@ steps:
   - task: Cache@2
     displayName: Cache pip
     inputs:
-      key: 'pip | $(Agent.OS) | $(PYTHON_VERSION) | requirements.txt'
-      path: '$(PIP_CACHE_DIR)'
+      key: 'pip | "$(Agent.OS)" | "py$(PYTHON_VERSION)" | requirements.txt'
+      restoreKeys: |
+        pip | "$(Agent.OS)" | "py$(PYTHON_VERSION)"
+        pip | "$(Agent.OS)"
+      path: $(PIP_CACHE_DIR)
 
   - task: UsePythonVersion@0
     inputs:
