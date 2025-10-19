@@ -18,7 +18,7 @@ pr:
   branches: { include: [ main, develop ] }
 
 # 托管 Agent（也可改用自托管：pool: { name: 'YourPool' }）
-pool: { vmImage: 'ubuntu-latest' }
+pool: { name: 'SelfHosted' }
 
 # 全局变量
 variables:
