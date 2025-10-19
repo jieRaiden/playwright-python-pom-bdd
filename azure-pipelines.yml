@@ -1,0 +1,109 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+# =========================
+# Azure Pipelines for Python + pytest
+# - GitHub 作为源码仓库
+# - 触发分支：main、develop（含 PR）
+# - 生成 JUnit 与覆盖率报告，并发布为构建产物
+# =========================
+
+trigger:
+  branches: { include: [ main, develop ] }
+  paths:
+    include: [ tests/**, features/**, api/**, pages/**, utilities/**, requirements.txt, pyproject.toml, pytest.ini ]
+pr:
+  branches: { include: [ main, develop ] }
+
+# 托管 Agent（也可改用自托管：pool: { name: 'YourPool' }）
+pool: { vmImage: 'ubuntu-latest' }
+
+# 全局变量
+variables:
+  PYTHON_VERSION: '3.11'
+  PIP_CACHE_DIR: $(Pipeline.Workspace)/.pip
+  ARTIFACT_NAME: 'reports'
+
+steps:
+# 缓存 pip 依赖（加速）
+- task: Cache@2
+  displayName: Cache pip
+  inputs:
+    key: 'pip | "$(Agent.OS)" | requirements.txt'
+    path: '$(PIP_CACHE_DIR)'
+
+# 选择 Python 版本
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(PYTHON_VERSION)'
+
+# 安装依赖
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: Install dependencies
+
+# 运行 pytest（JUnit + 覆盖率）
+- script: |
+    mkdir -p reports
+    pytest -q \
+      --maxfail=1 --disable-warnings \
+      --junitxml=reports/junit.xml \
+      --cov=./ \
+      --cov-report=xml:reports/coverage.xml \
+      --cov-report=term
+  displayName: Run tests (pytest + coverage)
+
+# 发布测试结果到 Tests 选项卡
+- task: PublishTestResults@2
+  displayName: Publish JUnit
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: 'reports/junit.xml'
+    failTaskOnFailedTests: true
+
+# 发布覆盖率到 Summary
+- task: PublishCodeCoverageResults@2
+  displayName: Publish coverage
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: 'reports/coverage.xml'
+
+# 导出报告为构建产物（可下载）
+- task: PublishBuildArtifacts@1
+  displayName: Publish artifacts
+  inputs:
+    PathtoPublish: 'reports'
+    ArtifactName: '$(ARTIFACT_NAME)'
+    publishLocation: 'Container'
+
+# ============ 可选增强（需要时取消注释） ============
+# 多 Python 版本并行矩阵：
+# strategy:
+#   matrix:
+#     py310: { PYTHON_VERSION: '3.10' }
+#     py311: { PYTHON_VERSION: '3.11' }
+
+# 只在自定义目录变化时触发（上面的 paths 已示例，可再调整）
+
+# Playwright UI 测试（如果项目有）：
+# - script: |
+#     npm ci
+#     npx playwright install --with-deps
+#     npx playwright test --reporter=junit,line --output=playwright-report
+#   displayName: Run Playwright
+# - task: PublishTestResults@2
+#   inputs:
+#     testResultsFormat: 'JUnit'
+#     testResultsFiles: 'playwright-report/*.xml'
+# - task: PublishBuildArtifacts@1
+#   inputs:
+#     PathtoPublish: 'playwright-report'
+#     ArtifactName: 'ui-report'
+
+# 使用 Key Vault 的变量组（先在 Library 里 Link secrets）：
+# variables:
+# - group: shared-secrets
+
