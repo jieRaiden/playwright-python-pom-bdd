@@ -37,7 +37,7 @@ pool:
   name: 'SelfHosted'
 
 variables:
-  PYTHON_VERSION: '3.11'
+  PYTHON_PATH: 'C:\Users\Raiden\AppData\Local\Programs\Python\Python310\python.exe'
   PIP_CACHE_DIR: '$(Pipeline.Workspace)/.pip'
   ARTIFACT_NAME: 'reports'
 
@@ -46,25 +46,21 @@ steps:
   - task: Cache@2
     displayName: Cache pip
     inputs:
-      key: 'pip | "$(Agent.OS)" | "py$(PYTHON_VERSION)" | requirements.txt'
+      key: 'pip | "$(Agent.OS)" | py310 | requirements.txt'
       restoreKeys: |
-        pip | "$(Agent.OS)" | "py$(PYTHON_VERSION)"
+        pip | "$(Agent.OS)" | py310
         pip | "$(Agent.OS)"
       path: $(PIP_CACHE_DIR)
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(PYTHON_VERSION)'
-
   - powershell: |
-      python -m pip install --upgrade pip
-      pip install --cache-dir "$(PIP_CACHE_DIR)" -r requirements.txt
-      python -m playwright install --with-deps
+      & "$(PYTHON_PATH)" -m pip install --upgrade pip
+      & "$(PYTHON_PATH)" -m pip install --cache-dir "$(PIP_CACHE_DIR)" -r requirements.txt
+      & "$(PYTHON_PATH)" -m playwright install --with-deps
     displayName: Install dependencies
 
   - powershell: |
       New-Item -ItemType Directory -Force -Path reports | Out-Null
-      python -m pytest -m "api" -q `
+      & "$(PYTHON_PATH)" -m pytest -m "api" -q `
         --maxfail=1 --disable-warnings `
         --junitxml=reports/junit.xml `
         --cov=. `
